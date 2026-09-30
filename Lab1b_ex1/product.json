@@ -1,0 +1,15 @@
+{
+  "id": "PROD-1001",
+  "name": "Sony WH-1000XM5 Bluetooth Headphones",
+  "price": 8500000,
+  "inStock": true,
+  "categories": [
+    "Audio",
+    "Electronics",
+    "Wireless"
+  ],
+  "supplier": {
+    "name": "Sony Vietnam",
+    "contact": "support@sony.com.vn"
+  }
+}
