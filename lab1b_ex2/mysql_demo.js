@@ -1,7 +1,7 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
-// === Khởi tạo Connection Pool ===
+// === Initialize Connection Pool ===
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -13,12 +13,12 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// === Hàm setup dữ liệu mẫu ===
+// === Function to Setup Sample Data ===
 async function setupDatabaseAndSeedData(pool) {
-  console.log("\n📊 === SETUP DỮ LIỆU MẪU ===\n");
+  console.log("\n📊 === SETUP SAMPLE DATA ===\n");
 
   try {
-    // Tạo bảng categories
+    // Create categories table
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,7 +28,7 @@ async function setupDatabaseAndSeedData(pool) {
       )
     `);
 
-    // Tạo bảng items
+    // Create items table
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS items (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -40,13 +40,13 @@ async function setupDatabaseAndSeedData(pool) {
       )
     `);
 
-    // Xóa dữ liệu cũ
+    // Clear old data
     await pool.execute('SET FOREIGN_KEY_CHECKS = 0');
     await pool.execute('TRUNCATE TABLE items');
     await pool.execute('TRUNCATE TABLE categories');
     await pool.execute('SET FOREIGN_KEY_CHECKS = 1');
 
-    // Thêm categories
+    // Insert categories
     await pool.execute(`
       INSERT INTO categories (name, description) VALUES
       ('Food', 'Daily essentials and groceries'),
@@ -57,7 +57,7 @@ async function setupDatabaseAndSeedData(pool) {
       ('Sports & Outdoors', 'Sporting goods and outdoor equipment')
     `);
 
-    // Thêm items
+    // Insert items
     await pool.execute(`
       INSERT INTO items (category_id, item_name, price, quantity) VALUES
       (1, 'Apple', 25000.00, 100),
@@ -72,10 +72,10 @@ async function setupDatabaseAndSeedData(pool) {
       (5, 'Coffee Mug', 45000.00, 80)
     `);
 
-    console.log("✅ Dữ liệu mẫu đã được setup\n");
+    console.log("✅ Sample data has been set up\n");
 
   } catch (error) {
-    console.error("❌ Lỗi setup dữ liệu:", error.message);
+    console.error("❌ Error setting up data:", error.message);
   }
 }
 
@@ -84,10 +84,10 @@ async function setupDatabaseAndSeedData(pool) {
 // ============================================
 async function question1(pool) {
   console.log("\n" + "=".repeat(80));
-  console.log("❓ QUESTION 1: Lọc & Sắp xếp");
+  console.log("❓ QUESTION 1: Filter & Sort");
   console.log("=".repeat(80));
-  console.log("📋 Yêu cầu: Lấy sản phẩm có giá >= 500,000 VND AND số lượng > 0");
-  console.log("           Sắp xếp theo giá giảm dần (ORDER BY price DESC)\n");
+  console.log("📋 Requirement: Get products with price >= 500,000 AND quantity > 0");
+  console.log("              Sort by price in descending order (ORDER BY price DESC)\n");
 
   try {
     const [rows] = await pool.execute(`
@@ -102,16 +102,16 @@ async function question1(pool) {
       ORDER BY price DESC
     `);
 
-    console.log("✅ Kết quả Query:");
+    console.log("✅ Query Results:");
     console.table(rows);
 
-    console.log("📌 Giải thích:");
-    console.log("   - WHERE price >= 500000: Lọc sản phẩm có giá >= 500,000 VND");
-    console.log("   - AND quantity > 0: Chỉ lấy sản phẩm còn hàng (số lượng > 0)");
-    console.log("   - ORDER BY price DESC: Sắp xếp theo giá từ cao đến thấp\n");
+    console.log("📌 Explanation:");
+    console.log("   - WHERE price >= 500000: Filter products with price >= 500,000");
+    console.log("   - AND quantity > 0: Only get in-stock products (quantity > 0)");
+    console.log("   - ORDER BY price DESC: Sort by price from highest to lowest\n");
 
   } catch (error) {
-    console.error("❌ Lỗi:", error.message);
+    console.error("❌ Error:", error.message);
   }
 }
 
@@ -120,9 +120,9 @@ async function question1(pool) {
 // ============================================
 async function question2(pool, keyword) {
   console.log("\n" + "=".repeat(80));
-  console.log("❓ QUESTION 2: Tìm kiếm với LIKE (Wildcard Search)");
+  console.log("❓ QUESTION 2: Search with LIKE (Wildcard Search)");
   console.log("=".repeat(80));
-  console.log(`📋 Yêu cầu: Tìm sản phẩm có tên chứa từ khóa: "${keyword}"\n`);
+  console.log(`📋 Requirement: Find products with name containing keyword: "${keyword}"\n`);
 
   try {
     const [rows] = await pool.execute(`
@@ -137,19 +137,19 @@ async function question2(pool, keyword) {
     `, [`%${keyword}%`]);
 
     if (rows.length === 0) {
-      console.log(`⚠️ Không tìm thấy sản phẩm chứa từ khóa "${keyword}"\n`);
+      console.log(`⚠️ No products found containing keyword "${keyword}"\n`);
     } else {
-      console.log("✅ Kết quả Query:");
+      console.log("✅ Query Results:");
       console.table(rows);
 
-      console.log("📌 Giải thích:");
-      console.log(`   - WHERE item_name LIKE '%${keyword}%': Tìm sản phẩm có tên chứa từ khóa`);
-      console.log("   - % là wildcard: %keyword% = chứa keyword ở vị trí bất kỳ");
-      console.log("   - Dùng Prepared Statement (?) để tránh SQL injection\n");
+      console.log("📌 Explanation:");
+      console.log(`   - WHERE item_name LIKE '%${keyword}%': Find products with keyword in name`);
+      console.log("   - % is a wildcard: %keyword% = contains keyword at any position");
+      console.log("   - Using Prepared Statement (?) to prevent SQL injection\n");
     }
 
   } catch (error) {
-    console.error("❌ Lỗi:", error.message);
+    console.error("❌ Error:", error.message);
   }
 }
 
@@ -158,16 +158,16 @@ async function question2(pool, keyword) {
 // ============================================
 async function question3(pool) {
   console.log("\n" + "=".repeat(80));
-  console.log("❓ QUESTION 3: Hàm Aggregate (SUM, AVG, COUNT)");
+  console.log("❓ QUESTION 3: Aggregate Functions (SUM, AVG, COUNT)");
   console.log("=".repeat(80));
-  console.log("📋 Yêu cầu: Tính tổng số lượng, giá trung bình, tổng số sản phẩm\n");
+  console.log("📋 Requirement: Calculate total quantity, average price, total products\n");
  
   try {
-    // Kiểm tra dữ liệu trước
+    // Check data first
     const [checkData] = await pool.execute('SELECT COUNT(*) as count FROM items');
-    console.log(`ℹ️ Debug: Tổng items trong DB: ${checkData[0].count}`);
+    console.log(`ℹ️ Debug: Total items in DB: ${checkData[0].count}`);
  
-    // Lấy dữ liệu aggregate
+    // Get aggregate data
     const [rows] = await pool.execute(`
       SELECT 
         SUM(quantity) as total_stock_quantity,
@@ -179,27 +179,27 @@ async function question3(pool) {
       FROM items
     `);
  
-    console.log("✅ Kết quả Query:\n");
+    console.log("✅ Query Results:\n");
     const result = rows[0];
     
-    // Hiển thị kết quả dễ đọc
-    console.log("📊 THỐNG KÊ TỔNG QUÁT:");
-    console.log(`   Tổng số lượng (SUM): ${result.total_stock_quantity}`);
-    console.log(`   Tổng số sản phẩm (COUNT): ${result.total_number_of_items}`);
-    console.log(`   Giá trung bình (AVG): ${parseFloat(result.average_price).toFixed(2)} VND`);
-    console.log(`   Giá thấp nhất (MIN): ${parseFloat(result.min_price).toFixed(2)} VND`);
-    console.log(`   Giá cao nhất (MAX): ${parseFloat(result.max_price).toFixed(2)} VND`);
-    console.log(`   Tổng giá trị kho: ${parseFloat(result.total_inventory_value).toFixed(2)} VND`);
+    // Display results in readable format
+    console.log("📊 GENERAL STATISTICS:");
+    console.log(`   Total Quantity (SUM): ${result.total_stock_quantity}`);
+    console.log(`   Total Products (COUNT): ${result.total_number_of_items}`);
+    console.log(`   Average Price (AVG): ${parseFloat(result.average_price).toFixed(2)}`);
+    console.log(`   Minimum Price (MIN): ${parseFloat(result.min_price).toFixed(2)}`);
+    console.log(`   Maximum Price (MAX): ${parseFloat(result.max_price).toFixed(2)}`);
+    console.log(`   Total Inventory Value: ${parseFloat(result.total_inventory_value).toFixed(2)}`);
  
-    console.log("\n📌 Giải thích:");
-    console.log("   - SUM(quantity): Cộng tất cả số lượng items");
-    console.log("   - AVG(price): Tính giá trung bình = Tổng giá / Số lượng item");
-    console.log("   - COUNT(*): Đếm tổng số dòng (items) trong bảng");
-    console.log("   - MIN(price) & MAX(price): Tìm giá thấp nhất và cao nhất");
-    console.log("   - SUM(price * quantity): Tổng giá trị = giá × số lượng\n");
+    console.log("\n📌 Explanation:");
+    console.log("   - SUM(quantity): Add all quantities of items");
+    console.log("   - AVG(price): Calculate average price = Total price / Number of items");
+    console.log("   - COUNT(*): Count total number of rows (items) in the table");
+    console.log("   - MIN(price) & MAX(price): Find the lowest and highest prices");
+    console.log("   - SUM(price * quantity): Total value = price × quantity\n");
  
   } catch (error) {
-    console.error("❌ Lỗi:", error.message);
+    console.error("❌ Error:", error.message);
   }
 }
 
@@ -210,10 +210,10 @@ async function question4(pool) {
   console.log("\n" + "=".repeat(80));
   console.log("❓ QUESTION 4: GROUP BY & HAVING (Category Statistics)");
   console.log("=".repeat(80));
-  console.log("📋 Yêu cầu: Thống kê theo từng category:");
-  console.log("           - Tổng số items");
-  console.log("           - Tổng giá trị kho (SUM(price * quantity))");
-  console.log("           - Chỉ hiển thị category có tổng giá trị > 10,000,000 VND\n");
+  console.log("📋 Requirement: Statistics by category:");
+  console.log("              - Total number of items");
+  console.log("              - Total inventory value (SUM(price * quantity))");
+  console.log("              - Only show categories with total value > 10,000,000\n");
 
   try {
     const [rows] = await pool.execute(`
@@ -232,40 +232,40 @@ async function question4(pool) {
     `);
 
     if (rows.length === 0) {
-      console.log("⚠️ Không có category nào có tổng giá trị kho > 10,000,000 VND\n");
+      console.log("⚠️ No category has total inventory value > 10,000,000\n");
     } else {
-      console.log("✅ Kết quả Query:");
+      console.log("✅ Query Results:");
       console.table(rows);
 
-      console.log("📌 Giải thích:");
-      console.log("   - GROUP BY c.id, c.name: Nhóm dữ liệu theo từng category");
-      console.log("   - LEFT JOIN: Giữ tất cả category, ngay cả khi không có items");
-      console.log("   - COUNT(i.id): Đếm số items trong mỗi category");
-      console.log("   - SUM(i.price * i.quantity): Tính tổng giá trị kho");
-      console.log("   - HAVING: Lọc những GROUP có tổng giá trị > 10,000,000");
-      console.log("             (Chú ý: HAVING dùng sau GROUP BY, WHERE dùng trước)\n");
+      console.log("📌 Explanation:");
+      console.log("   - GROUP BY c.id, c.name: Group data by each category");
+      console.log("   - LEFT JOIN: Keep all categories, even if they have no items");
+      console.log("   - COUNT(i.id): Count the number of items in each category");
+      console.log("   - SUM(i.price * i.quantity): Calculate total inventory value");
+      console.log("   - HAVING: Filter groups with total value > 10,000,000");
+      console.log("             (Note: HAVING is used after GROUP BY, WHERE is used before)\n");
     }
 
   } catch (error) {
-    console.error("❌ Lỗi:", error.message);
+    console.error("❌ Error:", error.message);
   }
 }
 
 // ============================================
-// === Hàm chính ===
+// === Main Function ===
 // ============================================
 async function main() {
   try {
-    console.log("\n🔄 Đang kết nối tới MySQL Database...");
-    console.log("✓ Kết nối thành công!\n");
+    console.log("\n🔄 Connecting to MySQL Database...");
+    console.log("✓ Connection successful!\n");
 
-    // Setup dữ liệu
+    // Setup sample data
     await setupDatabaseAndSeedData(pool);
 
-    // Chạy các question 1-4
+    // Run questions 1-4
     await question1(pool);
     
-    // Q2: Tìm kiếm với 2 từ khóa
+    // Q2: Search with 2 keywords
     await question2(pool, 'Wireless');
     await question2(pool, 'Gaming');
     
@@ -273,12 +273,12 @@ async function main() {
     await question4(pool);
 
   } catch (error) {
-    console.error("❌ Lỗi chính:", error.message);
+    console.error("❌ Main error:", error.message);
   } finally {
     await pool.end();
-    console.log("\n✓ Đã đóng kết nối MySQL.\n");
+    console.log("\n✓ MySQL connection closed.\n");
   }
 }
 
-// Chạy
+// Run
 main();
